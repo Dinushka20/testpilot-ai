@@ -10,6 +10,12 @@ const aiRoute = require("./routes/aiRoute");
 
 const app = express();
 
+// Debug middleware to log all incoming requests (helps identify if Azure's warmup probe is reaching the container)
+app.use((req, res, next) => {
+    console.log(`[Request] ${req.method} ${req.url} - Host: ${req.headers.host} - UA: ${req.headers["user-agent"]}`);
+    next();
+});
+
 // --- NEW SECURITY CONFIGURATION ---
 // Explicitly allow your frontend URLs to bypass the CORS block
 const corsOptions = {
@@ -47,6 +53,6 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.WEBSITES_PORT || process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });
