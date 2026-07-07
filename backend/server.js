@@ -15,8 +15,15 @@ const app = express();
 // ============================================================
 const PORT = process.env.WEBSITES_PORT || process.env.PORT || 8080;
 
-// CORS — allow all origins during startup debugging
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173',
+        'https://testpilot-ui-fudpa7ahfdb7dyd2.southeastasia-01.azurewebsites.net'
+    ],
+    credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ============================================================
