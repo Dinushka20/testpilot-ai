@@ -7,4 +7,5 @@ COPY . .
 ENV PORT=5000
 EXPOSE 5000
 # Change to the 'shell' form to ensure it runs correctly on Linux
-CMD node server.js
+# Use the absolute minimal command
+CMD ["node", "server.js"]

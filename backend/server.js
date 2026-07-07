@@ -26,8 +26,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // 2. Connect to MongoDB
+// ... existing code ...
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB Connected Successfully"))
+    .then(() => {
+        console.log("✅ MongoDB Connected Successfully");
+        // Start listening ONLY after DB is connected to avoid race conditions
+        app.listen(process.env.PORT || 5000, () => {
+            console.log(`Server running on port ${process.env.PORT || 5000}`);
+        });
+    })
     .catch((err) => console.log("❌ MongoDB Connection Error:", err));
 
 // 3. Register your API Routes
