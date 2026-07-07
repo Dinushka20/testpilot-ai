@@ -1,19 +1,10 @@
-# backend/Dockerfile
-# Use a lightweight Node.js alpine image for a smaller footprint
 FROM node:20-alpine
-
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy package.json and install dependencies FIRST (this caches the npm install step)
 COPY package*.json ./
 RUN npm install --production
-
-# Copy the rest of the backend source code
 COPY . .
-
-# Expose the port your Express app runs on
+# Explicitly set the port here too
+ENV PORT=5000
 EXPOSE 5000
-
-# Start the server
+# Use 'exec' form for faster startup
 CMD ["node", "server.js"]
