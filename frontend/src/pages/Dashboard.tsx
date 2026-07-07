@@ -14,7 +14,10 @@ export default function Dashboard() {
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    api.get("/").then((res) => setBackendMessage(res.data.message)).catch(() => setBackendMessage("Backend offline"));
+    api.get("/").then((res) => {
+      const msg = res.data.message || (typeof res.data === 'string' ? "Backend Online 🚀" : "Connected");
+      setBackendMessage(msg);
+    }).catch(() => setBackendMessage("Backend offline"));
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
