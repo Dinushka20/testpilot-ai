@@ -3,7 +3,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --production
 COPY . .
-# Force the port to 80 so Azure's default Load Balancer can talk to it
-ENV PORT=80
-EXPOSE 80
+ENV PORT=5000
+EXPOSE 5000
 CMD ["node", "server.js"]
