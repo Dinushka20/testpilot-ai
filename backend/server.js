@@ -10,7 +10,19 @@ const aiRoute = require("./routes/aiRoute");
 
 const app = express();
 
-app.use(cors());
+// --- NEW SECURITY CONFIGURATION ---
+// Explicitly allow your frontend URLs to bypass the CORS block
+const corsOptions = {
+    origin: [
+        'http://localhost:5173', // For local development
+        'https://testpilot-ui-fudpa7ahfdb7dyd2.southeastasia-01.azurewebsites.net' // Live Azure UI
+    ],
+    credentials: true, // Required if you ever add cookies/authentication later
+};
+
+app.use(cors(corsOptions));
+// ----------------------------------
+
 app.use(express.json());
 
 // 2. Connect to MongoDB
