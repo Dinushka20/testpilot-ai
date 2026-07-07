@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -10,49 +9,60 @@ const aiRoute = require("./routes/aiRoute");
 
 const app = express();
 
-// Debug middleware to log all incoming requests (helps identify if Azure's warmup probe is reaching the container)
+// ============================================================
+// CRITICAL: Use a hardcoded port. No env var ambiguity.
+// Azure App Service default for custom containers is 8080.
+// ============================================================
+const PORT = 8080;
+
+// Log all incoming requests (debug: see if Azure probe reaches us)
 app.use((req, res, next) => {
-    console.log(`[Request] ${req.method} ${req.url} - Host: ${req.headers.host} - UA: ${req.headers["user-agent"]}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// --- NEW SECURITY CONFIGURATION ---
-// Explicitly allow your frontend URLs to bypass the CORS block
+// CORS configuration
 const corsOptions = {
     origin: [
-        'http://localhost:5173', // For local development
-        'https://testpilot-ui-fudpa7ahfdb7dyd2.southeastasia-01.azurewebsites.net' // Live Azure UI
+        'http://localhost:5173',
+        'https://testpilot-ui-fudpa7ahfdb7dyd2.southeastasia-01.azurewebsites.net'
     ],
-    credentials: true, // Required if you ever add cookies/authentication later
+    credentials: true,
 };
-
 app.use(cors(corsOptions));
-// ----------------------------------
-
 app.use(express.json());
 
-// 2. Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("✅ MongoDB Connected Successfully");
-    })
-    .catch((err) => {
-        console.error("❌ MongoDB Connection Error:", err);
-    });
-
-// 3. Register your API Routes
-app.use("/api", uploadRoute);           // Handles: POST /api/upload
-app.use("/api/projects", projectRoute); // Handles: POST /api/projects/save
-app.use("/api/ai", aiRoute);            // Handles: POST /api/ai/generate
-
-// 4. Default Route
+// ============================================================
+// CRITICAL: Register the health/root route BEFORE anything else.
+// Azure's warmup probe hits "/" — this MUST respond immediately.
+// ============================================================
 app.get("/", (req, res) => {
-    res.json({
-        message: "TestPilot AI Backend Running 🚀"
-    });
+    res.status(200).json({ message: "TestPilot AI Backend Running 🚀" });
 });
 
-const PORT = process.env.WEBSITES_PORT || process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+// Register API Routes
+app.use("/api", uploadRoute);
+app.use("/api/projects", projectRoute);
+app.use("/api/ai", aiRoute);
+
+// ============================================================
+// CRITICAL: Start listening IMMEDIATELY, BEFORE MongoDB.
+// Azure's warmup probe must get a 200 response ASAP.
+// MongoDB connection happens in the background afterward.
+// ============================================================
+const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`✅ Server listening on 0.0.0.0:${PORT}`);
+
+    // Connect to MongoDB AFTER the server is already accepting requests
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => {
+            console.log("✅ MongoDB Connected Successfully");
+        })
+        .catch((err) => {
+            console.error("❌ MongoDB Connection Error:", err);
+        });
+});
+
+server.on("error", (err) => {
+    console.error("❌ Server error:", err);
 });
